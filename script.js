@@ -379,7 +379,17 @@ ${jsonExtraKeys}
             }
 
         } catch (error) {
-            console.warn(error.message);
+            console.warn("Fallo el Intento 1:", error.message);
+
+            // Solo intentar el fallback si estamos en entorno local
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+
+            if (!isLocal) {
+                // Si estamos en Netlify (producción) y falló el Intento 1, lanzamos el error original 
+                // para que el usuario sepa exactamente qué falta configurar.
+                throw new Error("El servidor de Netlify falló al generar el documento. Verifica si configuraste GEMINI_API_KEY en Netlify. Detalle: " + error.message);
+            }
+
             // Intento 2 (Fallback): Llamada directa a Gemini sólo para evitar que el entorno de desarrollo local sin netlify-cli se rompa.
             const LOCAL_API_KEY = "TU_CLAVE_LOCAL_AQUI"; // ADVERTENCIA: NUNCA subas tu clave real a GitHub
             response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${LOCAL_API_KEY}`, {
